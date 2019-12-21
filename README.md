@@ -32,7 +32,7 @@ scrapy==1.5.1
   -   comment_name：评论者的昵称
   -   comment_text：评论内容
 
- [说好不哭（with 五月天阿信）](https://y.qq.com/n/yqq/song/001qvvgF38HVc4.html)样例：
+ 爬取[说好不哭（with 五月天阿信）](https://y.qq.com/n/yqq/song/001qvvgF38HVc4.html)样例：
 ```
 {
 	'singer_name': ['周杰伦'],
@@ -135,14 +135,15 @@ https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%2
 
 使用控制变量法，固定area和genre变量，比较下列请求第一、二、三页歌手的url，可以发现其中index和cur_page中存在一些潜在规律
 
-在下列三个url中，粗体"index"后面跟着的粗体数字就是变量index，粗体"cur_page"后面跟着的粗体数字就是变量cur_page。在歌手页面，可以看到每一页有80个歌手。很显然，当要请求第n页歌手的时候，cur_page=n，index=80*(n-1)。
+在下列三个url中(*是人为添加的，方便描述)，index后面跟着的用**标记的数字就是变量index，cur_page后面用
+**标记的数字就是变量cur_page。在歌手页面，可以看到每一页有80个歌手。很显然，当要请求第n页歌手的时候，cur_page=n，index=80(n-1)。
+```
+https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A**0**%2C%22cur_page%22%3A**1**%7D%7D%7D
 
-https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22**index**%22%3A-100%2C%22sin%22%3A**0**%2C%22**cur_page**%22%3A**1**%7D%7D%7D
+https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A**80**%2C%22cur_page%22%3A**2**%7D%7D%7D
 
-https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22**index**%22%3A-100%2C%22sin%22%3A**80**%2C%22**cur_page**%22%3A**2**%7D%7D%7D
-
-https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22**index**%22%3A-100%2C%22sin%22%3A**160**%2C%22**cur_page**%22%3A**3**%7D%7D%7D
-
+https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A**160**%2C%22cur_page%22%3A**3**%7D%7D%7D
+```
 通过以上分析，可以得到请求歌手列表的url格式如下：
 ```
 singer_list_url = "https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A{area}%2C%22sex%22%3A-100%2C%22genre%22%3A{genre}%2C%22index%22%3A-100%2C%22sin%22%3A{index}%2C%22cur_page%22%3A{cur_page}%7D%7D%7D"
