@@ -1,12 +1,12 @@
-# QQ音乐爬虫(with Scrapy)/QQ Music Spider
+# QQ音乐爬虫(with scrapy)/QQ Music Spider
 
 ## 项目介绍
-- 在写一个项目的时候需要用到一些音乐的信息，但是在网上找了许久也没找到满意的音乐语料，于是便用Scrapy写了一个QQ音乐的爬虫
+- 在写一个项目的时候需要用到一些音乐的信息，但是在网上找了许久也没找到满意的音乐语料，于是便用scrapy写了一个QQ音乐的爬虫
 - 由于本人只需要用到中文歌曲，所以仅使用该爬虫爬取了QQ音乐中排名前6400名的内地和港台歌手的49万+的歌曲信息，该资源也分享到了百度云(**该资源仅用于学习交流，请勿用于商业用途，如有侵权，请联系删除**)
 - QQ音乐的歌曲信息是使用js动态填充的，虽然QQ音乐的歌手和歌曲信息是使用GET进行明文请求，但是开发人员却在url请求参数上添加了一些冗余信息，对参数进行了一些加密，因此大部分精力还是花在了解析url上
 
 ## 运行环境
-scrapy==2.2.2
+scrapy==1.5.1
 
 ## 使用方法
 进入项目根目录,运行如下命令即可：scrapy crawl qqmusic
@@ -15,22 +15,22 @@ scrapy==2.2.2
 爬取到的歌曲信息保存在根目录下的music文件中，每一行表示一条歌曲，存储格式为json
 
 歌曲的字段说明：
-- singer_name:歌手名称，数组形式，因为一首歌可能由多名歌手合唱
-- song_name:歌曲名称
-- subtitle:歌曲的子标题
-- album_name:专辑名称
-- singer_id:歌手id，数组形式
-- singer_mid:歌手的mid，数组形式
-- song_time_public:歌曲发行时间
-- song_type:歌曲类型
-- language:歌曲语种
-- song_id:歌曲id
-- song_mid:歌曲mid
-- song_url:歌曲播放的url
-- lyric:歌词
-- hot_comments:歌曲的精彩评论(此处只爬取了歌曲的精彩评论，部分比较冷门的歌曲有最新评论，但是没有精彩评论)，数组形式。若无精彩评论，置为"null"
-    - comment_name:评论者的昵称
-    - comment_text:评论内容
+- singer_name：歌手名称，数组形式，因为一首歌可能由多名歌手合唱
+- song_name：歌曲名称
+- subtitle：歌曲的子标题
+- album_name：专辑名称
+- singer_id：歌手id，数组形式
+- singer_mid：歌手的mid，数组形式
+- song_time_public：歌曲发行时间
+- song_type：歌曲类型
+- language：歌曲语种
+- song_id：歌曲id
+- song_mid：歌曲mid
+- song_url：歌曲播放的url
+- lyric：歌词
+- hot_comments：歌曲的精彩评论(此处只爬取了歌曲的精彩评论，部分比较冷门的歌曲有最新评论，但是没有精彩评论)，数组形式。若无精彩评论，置为"null"
+  -   comment_name：评论者的昵称
+  -   comment_text：评论内容
 
  [说好不哭（with 五月天阿信）](https://y.qq.com/n/yqq/song/001qvvgF38HVc4.html)样例：
 ```
@@ -116,34 +116,32 @@ scrapy==2.2.2
 QQ音乐的歌手和歌曲信息，都是使用js进行动态填充的，所以不可能通过爬取html网页，然后解析网页内容来获取歌曲信息。既然是通过js进行动态填充，那就需要对请求的url的格式进行解析
 
 ### 歌手列表url解析
-打开QQ音乐的歌手页面https://y.qq.com/portal/singer_list.html，用开发者工具查看，找到请求歌手列表的url如下：
+打开QQ音乐的 [歌手页面](https://y.qq.com/portal/singer_list.html) ，用开发者工具查看，找到请求歌手列表的url如下：
 ```
 https://u.y.qq.com/cgi-bin/musicu.fcg?-=getUCGI9574303950614538&g_tk=5381&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0&data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A0%2C%22cur_page%22%3A1%7D%7D%7D
 ```
-可以看到url中携带了很多参数：g_tk、loginUin、hostUin、format、inCharset、outCharset、notice、platform、needNewCode、data
+可以看到url中携带了很多参数，包括：g_tk、loginUin、hostUin、format、inCharset、outCharset、notice、platform、needNewCode、data
 
 将该url放到postman中，尝试一个接一个地取消参数，找到有用的参数。最终可以知道，其实只有data这个参数对请求有实际的作用，把其他参数去掉，得到简化后的url如下：
 ```
 https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A0%2C%22cur_page%22%3A1%7D%7D%7D
 ```
-结合歌手页面，仔细分析一下上述简化后的url，会发现data参数中隐藏携带了很多请求的参数：
+结合歌手页面，仔细分析一下上述简化后的url，会发现data参数中隐含地携带了很多实际的请求参数：
 - area：歌手的地域(内地、港台、欧美等)。-100:全部、200:内地、2:港台、5:欧美、4:日本、3:韩国、6:其他
 - genre：歌手风格(流行、嘻哈等)。-100：全部、1：流行、6：嘻哈、2：摇滚、4：电子、3：民谣、8：R&B、10：民歌、9：轻音乐、5：爵士、14：古典、25：乡村、20：蓝调
 - cur_page：当前歌手列表的页码
 - index：cur_page*page_size(index表示当前页的起始index，page_size表示每一页歌手的数量)
 
 
-使用高中生物的控制变量法，固定area和genre变量，比较请求第一、二、三页歌手的url，可以发现其中index和cur_page中存在一些潜在规律
+使用控制变量法，固定area和genre变量，比较下列请求第一、二、三页歌手的url，可以发现其中index和cur_page中存在一些潜在规律
 
-在上述url中，"index"后面跟着的粗体数字表示的就是index，"cur_page"后面跟着的粗体数字表示cur_page。在歌手页面，可以看到每一页有80个歌手。很显然，当要请求第n页歌手的时候，index=80*(n-1)，cur_page=n。
+在下列三个url中，粗体"index"后面跟着的粗体数字就是变量index，粗体"cur_page"后面跟着的粗体数字就是变量cur_page。在歌手页面，可以看到每一页有80个歌手。很显然，当要请求第n页歌手的时候，cur_page=n，index=80*(n-1)。
 
-```markdown
-https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A**0**%2C%22cur_page%22%3A**1**%7D%7D%7D
+https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22**index**%22%3A-100%2C%22sin%22%3A**0**%2C%22**cur_page**%22%3A**1**%7D%7D%7D
 
-https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A**80**%2C%22cur_page%22%3A**2**%7D%7D%7D
+https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22**index**%22%3A-100%2C%22sin%22%3A**80**%2C%22**cur_page**%22%3A**2**%7D%7D%7D
 
-https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22index%22%3A-100%2C%22sin%22%3A**160**%2C%22cur_page%22%3A**3**%7D%7D%7D
-```
+https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerList%22%3A%7B%22module%22%3A%22Music.SingerListServer%22%2C%22method%22%3A%22get_singer_list%22%2C%22param%22%3A%7B%22area%22%3A-100%2C%22sex%22%3A-100%2C%22genre%22%3A-100%2C%22**index**%22%3A-100%2C%22sin%22%3A**160**%2C%22**cur_page**%22%3A**3**%7D%7D%7D
 
 通过以上分析，可以得到请求歌手列表的url格式如下：
 ```
@@ -155,7 +153,7 @@ singer_list_url = "https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7
 ```
 https://u.y.qq.com/cgi-bin/musicu.fcg?-=getSingerSong8235365887193979&g_tk=5381&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0&data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerSongList%22%3A%7B%22method%22%3A%22GetSingerSongList%22%2C%22param%22%3A%7B%22order%22%3A1%2C%22singerMid%22%3A%22004Be55m1SJaLk%22%2C%22begin%22%3A0%2C%22num%22%3A10%7D%2C%22module%22%3A%22musichall.song_list_server%22%7D%7D
 ```
-过滤掉无用的参数，得到：
+过滤掉无用的参数，得到简化后的url：
 ```
 https://u.y.qq.com/cgi-bin/musicu.fcg?data=%7B%22comm%22%3A%7B%22ct%22%3A24%2C%22cv%22%3A0%7D%2C%22singerSongList%22%3A%7B%22method%22%3A%22GetSingerSongList%22%2C%22param%22%3A%7B%22order%22%3A1%2C%22singerMid%22%3A%22004Be55m1SJaLk%22%2C%22begin%22%3A0%2C%22num%22%3A10%7D%2C%22module%22%3A%22musichall.song_list_server%22%7D%7D
 ```
@@ -184,9 +182,9 @@ https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_yqq.fcg?musicid=105648715&form
 ```
 容易看出
 - musicid：song_id
-- referer中的"004RDW5Q2ol2jj"：song_mid
+- referer中的"004RDW5Q2ol2jj"表示song_mid
 
-最终的到请求歌词的url如下，lyric_url需要带上referer这个header：
+最终得到请求歌词的url如下，lyric_url需要带上referer这个header：
 ```
 lyric_url = "https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_yqq.fcg?nobase64=1&musicid={song_id}&format=json"
 
@@ -220,7 +218,7 @@ comment_url = 'https://c.y.qq.com/base/fcgi-bin/fcg_global_comment_h5.fcg?biztyp
 https://y.qq.com/n/yqq/song/{song_mid}.html
 ```
 ## 歌词解析
-[说好不哭（with 五月天阿信）](https://y.qq.com/n/yqq/song/001qvvgF38HVc4.html)
+以周杰伦的[说好不哭（with 五月天阿信）](https://y.qq.com/n/yqq/song/001qvvgF38HVc4.html)为例
 
 通过lyric_url请求获得的歌词格式如下，格式看起来还是比较杂乱的，包含各种字符
 ```
@@ -325,7 +323,7 @@ user agent池如下：
 - 完善setting，使用户能更灵活地爬取不同地域、风格的歌曲
 
 ## 未解决问题
-程序可以正常运行，但是当爬取结束时(日志信息写着'finish_reason': 'finished'，表明爬虫爬取任务完成)，报了一个错，虽然不影响结果，但还未弄明白报错的原因
+程序可以正常运行，但是当爬取结束时(日志信息写着'finish_reason':'finished'，表明爬虫爬取任务完成)，报了一个错，虽然不影响结果，但报错原因暂时不明
 ```
 2019-12-21 15:08:53 [scrapy.core.engine] INFO: Closing spider (finished)
 2019-12-21 15:08:53 [scrapy.statscollectors] INFO: Dumping Scrapy stats:
